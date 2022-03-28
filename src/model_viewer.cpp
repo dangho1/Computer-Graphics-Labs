@@ -33,7 +33,8 @@ struct Context {
     GLuint program;
     GLuint emptyVAO;
     float elapsedTime;
-    std::string gltfFilename = "cube_rgb.gltf";
+    glm::vec3 myColor;
+    std::string gltfFilename = "armadillo.gltf";
     // Add more variables here...
 };
 
@@ -78,6 +79,7 @@ void draw_scene(Context &ctx)
     // Define per-scene uniforms
     glUniform1f(glGetUniformLocation(ctx.program, "u_time"), ctx.elapsedTime);
     glm::mat4 view = glm::mat4(ctx.trackball.orient);
+    ImGui::ColorEdit3("My color", &ctx.myColor[0]);
 
     glUniformMatrix4fv(glGetUniformLocation(ctx.program, "u_view"), 1, GL_FALSE, &view[0][0]);
     // ...
@@ -109,7 +111,7 @@ void do_rendering(Context &ctx)
     cg::reset_gl_render_state();
 
     // Clear color and depth buffers
-    glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
+    glClearColor(ctx.myColor[0],ctx.myColor[1], ctx.myColor[2], 0.0f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
     draw_scene(ctx);
@@ -232,7 +234,7 @@ int main(int argc, char *argv[])
         ImGui_ImplOpenGL3_NewFrame();
         ImGui_ImplGlfw_NewFrame();
         ImGui::NewFrame();
-        // ImGui::ShowDemoWindow();
+        //ImGui::ShowDemoWindow();
         do_rendering(ctx);
         ImGui::Render();
         ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
