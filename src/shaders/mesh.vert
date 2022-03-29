@@ -4,6 +4,8 @@
 // Uniform constants
 uniform mat4 u_view;
 uniform float u_time;
+uniform mat4 u_projection;
+uniform mat4 u_model;
 // ...
 
 // Vertex inputs (attributes from vertex buffers)
@@ -25,7 +27,8 @@ void main()
     float cos_time = 0.5 * cos(u_time);
     float sin_time = 0.5 * sin(u_time);
     //gl_Position = vec4( cos_time + -a_position.x, -sin_time + -a_position.y, 0, 1.0);
-    gl_Position = u_view * a_position;
+    // gl_Position = u_view * a_position;
+    gl_Position = u_projection * u_view * u_model * a_position;
     v_color = v_color = 0.5 * a_normal + 0.5; // maps the normal direction to an RGB color;
     
 

@@ -78,17 +78,31 @@ void draw_scene(Context &ctx)
 
     // Define per-scene uniforms
     glUniform1f(glGetUniformLocation(ctx.program, "u_time"), ctx.elapsedTime);
-    glm::mat4 view = glm::mat4(ctx.trackball.orient);
+
     ImGui::ColorEdit3("My color", &ctx.myColor[0]);
 
+    glm::mat4 projection = glm::mat4(1.0f);
+    glUniformMatrix4fv(glGetUniformLocation(ctx.program, "u_projection"), 1, GL_FALSE,
+                       &projection[0][0]);
+
+    glm::mat4 model_trans = glm::translate(glm::mat4(1.0f), glm::vec3(0.5f, -0.3f, 0.0f));
+    glm::mat4 model_scale = glm::scale(glm::mat4(1.0f), glm::vec3(0.5f, 0.5f, 0.5f));
+    glm::mat4 model_rot = glm::rotate(glm::mat4(1.0f), 180.0f, glm::vec3(1.0f, 0.0f, 0.0f));
+    glm::mat4 model = model_trans * model_scale * model_rot;
+    glUniformMatrix4fv(glGetUniformLocation(ctx.program, "u_model"), 1, GL_FALSE, &model[0][0]);
+
+    glm::mat4 look = glm::lookAt(glm::vec3(0.0f, 0.0f, -1.0f), glm::vec3(0.0f, 0.0f, 0.0f),
+                                 glm::vec3(0.0f, 1.0f, 0.0f));
+
+    glm::mat4 perspective = glm::perspective(180.0f, 1.0f, 0.1f, 100.0f);
+
+    glm::mat4 view = perspective * look * glm::mat4(ctx.trackball.orient);
     glUniformMatrix4fv(glGetUniformLocation(ctx.program, "u_view"), 1, GL_FALSE, &view[0][0]);
-    // ...
 
     // Draw scene
     for (unsigned i = 0; i < ctx.asset.nodes.size(); ++i) {
         const gltf::Node &node = ctx.asset.nodes[i];
         const gltf::Drawable &drawable = ctx.drawables[node.mesh];
-        
 
         // Define per-object uniforms
         // ...
@@ -111,7 +125,7 @@ void do_rendering(Context &ctx)
     cg::reset_gl_render_state();
 
     // Clear color and depth buffers
-    glClearColor(ctx.myColor[0],ctx.myColor[1], ctx.myColor[2], 0.0f);
+    glClearColor(ctx.myColor[0], ctx.myColor[1], ctx.myColor[2], 0.0f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
     draw_scene(ctx);
