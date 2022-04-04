@@ -1,4 +1,5 @@
 #!/bin/bash
+export MODEL_VIEWER_ROOT=$PWD
 
 if [ -z "$MODEL_VIEWER_ROOT" ]
 then

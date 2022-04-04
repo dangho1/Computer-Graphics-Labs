@@ -34,6 +34,8 @@ struct Context {
     GLuint emptyVAO;
     float elapsedTime;
     glm::vec3 myColor;
+    glm::vec3 lightPosition;
+    glm::vec3 diffuseColor;
     std::string gltfFilename = "armadillo.gltf";
     // Add more variables here...
 };
@@ -84,9 +86,12 @@ void draw_scene(Context &ctx)
     glm::mat4 projection = glm::mat4(1.0f);
     glUniformMatrix4fv(glGetUniformLocation(ctx.program, "u_projection"), 1, GL_FALSE,
                        &projection[0][0]);
-
+                       
+    //Translate moves the object
     glm::mat4 model_trans = glm::translate(glm::mat4(1.0f), glm::vec3(0.5f, -0.3f, 0.0f));
+    //Scale scales the object
     glm::mat4 model_scale = glm::scale(glm::mat4(1.0f), glm::vec3(0.5f, 0.5f, 0.5f));
+    //Rotates the object
     glm::mat4 model_rot = glm::rotate(glm::mat4(1.0f), 180.0f, glm::vec3(1.0f, 0.0f, 0.0f));
     glm::mat4 model = model_trans * model_scale * model_rot;
     glUniformMatrix4fv(glGetUniformLocation(ctx.program, "u_model"), 1, GL_FALSE, &model[0][0]);
@@ -98,10 +103,12 @@ void draw_scene(Context &ctx)
 
     glm::mat4 view = perspective * look * glm::mat4(ctx.trackball.orient);
     glUniformMatrix4fv(glGetUniformLocation(ctx.program, "u_view"), 1, GL_FALSE, &view[0][0]);
-
-    glUniform3fv(glGetUniformLocation(ctx.program, "u_lightPosition"), 1, &model[0][0]);
-
-    glUniform3fv(glGetUniformLocation(ctx.program, "u_diffuseColor"), 1, &model[0][0]);
+    ImGui::ColorEdit3("Lightning position", &ctx.lightPosition[0]);
+    //glm::vec3 lightPosition = glm::vec3(.0f, 1.0f, -1.0f);
+    glUniform3fv(glGetUniformLocation(ctx.program, "u_lightPosition"), 1, &ctx.lightPosition[0]);
+    ImGui::ColorEdit3("Diffuse Color", &ctx.diffuseColor[0]);
+    //glm::vec3 diffuseColor = glm::vec3(0.0f, 0.7f, 0.0f);
+    glUniform3fv(glGetUniformLocation(ctx.program, "u_diffuseColor"), 1, &ctx.diffuseColor[0]);
     
 
     // Draw scene
