@@ -5,7 +5,7 @@ set(CMAKE_DEPENDS_LANGUAGES
   )
 # The set of files for implicit dependencies of each language:
 set(CMAKE_DEPENDS_CHECK_C
-  "/home/dangho/gltf_viewer/external/gl3w/src/gl3w.c" "/home/dangho/gltf_viewer/build/CMakeFiles/model_viewer.dir/external/gl3w/src/gl3w.c.o"
+  "/home/martin/University/GraphicsProgramming/Computer-Graphics-Labs/external/gl3w/src/gl3w.c" "/home/martin/University/GraphicsProgramming/Computer-Graphics-Labs/build/CMakeFiles/model_viewer.dir/external/gl3w/src/gl3w.c.o"
   )
 set(CMAKE_C_COMPILER_ID "GNU")
 
@@ -26,18 +26,18 @@ set(CMAKE_C_TARGET_INCLUDE_PATH
   "../external/rapidjson/include"
   )
 set(CMAKE_DEPENDS_CHECK_CXX
-  "/home/dangho/gltf_viewer/external/imgui/examples/imgui_impl_glfw.cpp" "/home/dangho/gltf_viewer/build/CMakeFiles/model_viewer.dir/external/imgui/examples/imgui_impl_glfw.cpp.o"
-  "/home/dangho/gltf_viewer/external/imgui/examples/imgui_impl_opengl3.cpp" "/home/dangho/gltf_viewer/build/CMakeFiles/model_viewer.dir/external/imgui/examples/imgui_impl_opengl3.cpp.o"
-  "/home/dangho/gltf_viewer/external/imgui/imgui.cpp" "/home/dangho/gltf_viewer/build/CMakeFiles/model_viewer.dir/external/imgui/imgui.cpp.o"
-  "/home/dangho/gltf_viewer/external/imgui/imgui_demo.cpp" "/home/dangho/gltf_viewer/build/CMakeFiles/model_viewer.dir/external/imgui/imgui_demo.cpp.o"
-  "/home/dangho/gltf_viewer/external/imgui/imgui_draw.cpp" "/home/dangho/gltf_viewer/build/CMakeFiles/model_viewer.dir/external/imgui/imgui_draw.cpp.o"
-  "/home/dangho/gltf_viewer/external/imgui/imgui_widgets.cpp" "/home/dangho/gltf_viewer/build/CMakeFiles/model_viewer.dir/external/imgui/imgui_widgets.cpp.o"
-  "/home/dangho/gltf_viewer/src/cg_trackball.cpp" "/home/dangho/gltf_viewer/build/CMakeFiles/model_viewer.dir/src/cg_trackball.cpp.o"
-  "/home/dangho/gltf_viewer/src/cg_utils.cpp" "/home/dangho/gltf_viewer/build/CMakeFiles/model_viewer.dir/src/cg_utils.cpp.o"
-  "/home/dangho/gltf_viewer/src/gltf_io.cpp" "/home/dangho/gltf_viewer/build/CMakeFiles/model_viewer.dir/src/gltf_io.cpp.o"
-  "/home/dangho/gltf_viewer/src/gltf_render.cpp" "/home/dangho/gltf_viewer/build/CMakeFiles/model_viewer.dir/src/gltf_render.cpp.o"
-  "/home/dangho/gltf_viewer/src/gltf_scene.cpp" "/home/dangho/gltf_viewer/build/CMakeFiles/model_viewer.dir/src/gltf_scene.cpp.o"
-  "/home/dangho/gltf_viewer/src/model_viewer.cpp" "/home/dangho/gltf_viewer/build/CMakeFiles/model_viewer.dir/src/model_viewer.cpp.o"
+  "/home/martin/University/GraphicsProgramming/Computer-Graphics-Labs/external/imgui/examples/imgui_impl_glfw.cpp" "/home/martin/University/GraphicsProgramming/Computer-Graphics-Labs/build/CMakeFiles/model_viewer.dir/external/imgui/examples/imgui_impl_glfw.cpp.o"
+  "/home/martin/University/GraphicsProgramming/Computer-Graphics-Labs/external/imgui/examples/imgui_impl_opengl3.cpp" "/home/martin/University/GraphicsProgramming/Computer-Graphics-Labs/build/CMakeFiles/model_viewer.dir/external/imgui/examples/imgui_impl_opengl3.cpp.o"
+  "/home/martin/University/GraphicsProgramming/Computer-Graphics-Labs/external/imgui/imgui.cpp" "/home/martin/University/GraphicsProgramming/Computer-Graphics-Labs/build/CMakeFiles/model_viewer.dir/external/imgui/imgui.cpp.o"
+  "/home/martin/University/GraphicsProgramming/Computer-Graphics-Labs/external/imgui/imgui_demo.cpp" "/home/martin/University/GraphicsProgramming/Computer-Graphics-Labs/build/CMakeFiles/model_viewer.dir/external/imgui/imgui_demo.cpp.o"
+  "/home/martin/University/GraphicsProgramming/Computer-Graphics-Labs/external/imgui/imgui_draw.cpp" "/home/martin/University/GraphicsProgramming/Computer-Graphics-Labs/build/CMakeFiles/model_viewer.dir/external/imgui/imgui_draw.cpp.o"
+  "/home/martin/University/GraphicsProgramming/Computer-Graphics-Labs/external/imgui/imgui_widgets.cpp" "/home/martin/University/GraphicsProgramming/Computer-Graphics-Labs/build/CMakeFiles/model_viewer.dir/external/imgui/imgui_widgets.cpp.o"
+  "/home/martin/University/GraphicsProgramming/Computer-Graphics-Labs/src/cg_trackball.cpp" "/home/martin/University/GraphicsProgramming/Computer-Graphics-Labs/build/CMakeFiles/model_viewer.dir/src/cg_trackball.cpp.o"
+  "/home/martin/University/GraphicsProgramming/Computer-Graphics-Labs/src/cg_utils.cpp" "/home/martin/University/GraphicsProgramming/Computer-Graphics-Labs/build/CMakeFiles/model_viewer.dir/src/cg_utils.cpp.o"
+  "/home/martin/University/GraphicsProgramming/Computer-Graphics-Labs/src/gltf_io.cpp" "/home/martin/University/GraphicsProgramming/Computer-Graphics-Labs/build/CMakeFiles/model_viewer.dir/src/gltf_io.cpp.o"
+  "/home/martin/University/GraphicsProgramming/Computer-Graphics-Labs/src/gltf_render.cpp" "/home/martin/University/GraphicsProgramming/Computer-Graphics-Labs/build/CMakeFiles/model_viewer.dir/src/gltf_render.cpp.o"
+  "/home/martin/University/GraphicsProgramming/Computer-Graphics-Labs/src/gltf_scene.cpp" "/home/martin/University/GraphicsProgramming/Computer-Graphics-Labs/build/CMakeFiles/model_viewer.dir/src/gltf_scene.cpp.o"
+  "/home/martin/University/GraphicsProgramming/Computer-Graphics-Labs/src/model_viewer.cpp" "/home/martin/University/GraphicsProgramming/Computer-Graphics-Labs/build/CMakeFiles/model_viewer.dir/src/model_viewer.cpp.o"
   )
 set(CMAKE_CXX_COMPILER_ID "GNU")
 
@@ -60,7 +60,7 @@ set(CMAKE_CXX_TARGET_INCLUDE_PATH
 
 # Targets to which this target links.
 set(CMAKE_TARGET_LINKED_INFO_FILES
-  "/home/dangho/gltf_viewer/build/glfw/src/CMakeFiles/glfw.dir/DependInfo.cmake"
+  "/home/martin/University/GraphicsProgramming/Computer-Graphics-Labs/build/glfw/src/CMakeFiles/glfw.dir/DependInfo.cmake"
   )
 
 # Fortran module output directory.

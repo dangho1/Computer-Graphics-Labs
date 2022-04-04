@@ -1,7 +1,7 @@
-prefix=/home/dangho/gltf_viewer
+prefix=/home/martin/University/GraphicsProgramming/Computer-Graphics-Labs
 exec_prefix=${prefix}
-includedir=/home/dangho/gltf_viewer/include
-libdir=/home/dangho/gltf_viewer/lib
+includedir=/home/martin/University/GraphicsProgramming/Computer-Graphics-Labs/include
+libdir=/home/martin/University/GraphicsProgramming/Computer-Graphics-Labs/lib
 
 Name: GLFW
 Description: A multi-platform library for OpenGL, window and input

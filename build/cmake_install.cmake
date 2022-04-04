@@ -1,8 +1,8 @@
-# Install script for directory: /home/dangho/gltf_viewer
+# Install script for directory: /home/martin/University/GraphicsProgramming/Computer-Graphics-Labs
 
 # Set the install prefix
 if(NOT DEFINED CMAKE_INSTALL_PREFIX)
-  set(CMAKE_INSTALL_PREFIX "/home/dangho/gltf_viewer")
+  set(CMAKE_INSTALL_PREFIX "/home/martin/University/GraphicsProgramming/Computer-Graphics-Labs")
 endif()
 string(REGEX REPLACE "/$" "" CMAKE_INSTALL_PREFIX "${CMAKE_INSTALL_PREFIX}")
 
@@ -44,7 +44,7 @@ if("x${CMAKE_INSTALL_COMPONENT}x" STREQUAL "xUnspecifiedx" OR NOT CMAKE_INSTALL_
          FILE "$ENV{DESTDIR}${CMAKE_INSTALL_PREFIX}/bin/model_viewer"
          RPATH "")
   endif()
-  file(INSTALL DESTINATION "${CMAKE_INSTALL_PREFIX}/bin" TYPE EXECUTABLE FILES "/home/dangho/gltf_viewer/build/model_viewer")
+  file(INSTALL DESTINATION "${CMAKE_INSTALL_PREFIX}/bin" TYPE EXECUTABLE FILES "/home/martin/University/GraphicsProgramming/Computer-Graphics-Labs/build/model_viewer")
   if(EXISTS "$ENV{DESTDIR}${CMAKE_INSTALL_PREFIX}/bin/model_viewer" AND
      NOT IS_SYMLINK "$ENV{DESTDIR}${CMAKE_INSTALL_PREFIX}/bin/model_viewer")
     if(CMAKE_INSTALL_DO_STRIP)
@@ -55,7 +55,7 @@ endif()
 
 if(NOT CMAKE_INSTALL_LOCAL_ONLY)
   # Include the install script for each subdirectory.
-  include("/home/dangho/gltf_viewer/build/glfw/cmake_install.cmake")
+  include("/home/martin/University/GraphicsProgramming/Computer-Graphics-Labs/build/glfw/cmake_install.cmake")
 
 endif()
 
@@ -67,5 +67,5 @@ endif()
 
 string(REPLACE ";" "\n" CMAKE_INSTALL_MANIFEST_CONTENT
        "${CMAKE_INSTALL_MANIFEST_FILES}")
-file(WRITE "/home/dangho/gltf_viewer/build/${CMAKE_INSTALL_MANIFEST}"
+file(WRITE "/home/martin/University/GraphicsProgramming/Computer-Graphics-Labs/build/${CMAKE_INSTALL_MANIFEST}"
      "${CMAKE_INSTALL_MANIFEST_CONTENT}")

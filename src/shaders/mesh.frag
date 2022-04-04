@@ -17,4 +17,7 @@ void main()
 {
     frag_color = vec4(v_color, 0.0);
 
+    /* PART 3 */
+    //frag_color = v_color;
+
 }

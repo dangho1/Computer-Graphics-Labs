@@ -18,6 +18,9 @@ in vec3 a_normal;
 out vec3 v_color;
 // ...
 
+uniform vec3 u_diffuseColor; // The diffuse surface color of the model
+uniform vec3 u_lightPosition; // The position of your light source
+
 void main()
 {
     //gl_Position = a_position;
@@ -29,7 +32,24 @@ void main()
     //gl_Position = vec4( cos_time + -a_position.x, -sin_time + -a_position.y, 0, 1.0);
     // gl_Position = u_view * a_position;
     gl_Position = u_projection * u_view * u_model * a_position;
-    v_color = v_color = 0.5 * a_normal + 0.5; // maps the normal direction to an RGB color;
+    //v_color = 0.5 * a_normal + 0.5; // maps the normal direction to an RGB color;
     
+    /* ---- TASK3 ---- */
 
+    //Model View Matrix
+    mat4 mv = mat4(u_view * u_model);
+    // Transform the vertex position to view space (eye coordinates)
+    vec3 positionEye = vec3(mv * a_position);
+
+    // Calculate the view-space normal
+    vec3 N = normalize(mat3(mv) * a_normal);
+
+    // Calculate the view-space light direction
+    vec3 L = normalize(u_lightPosition - positionEye);
+
+    // Calculate the diffuse (Lambertian) reflection term
+    float diffuse = max(0.0, dot(N, L));
+
+    // Multiply the diffuse reflection term with the base surface color
+    v_color = diffuse * u_diffuseColor;
 }

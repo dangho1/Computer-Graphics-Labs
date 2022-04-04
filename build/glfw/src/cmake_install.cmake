@@ -1,8 +1,8 @@
-# Install script for directory: /home/dangho/gltf_viewer/external/glfw/src
+# Install script for directory: /home/martin/University/GraphicsProgramming/Computer-Graphics-Labs/external/glfw/src
 
 # Set the install prefix
 if(NOT DEFINED CMAKE_INSTALL_PREFIX)
-  set(CMAKE_INSTALL_PREFIX "/home/dangho/gltf_viewer")
+  set(CMAKE_INSTALL_PREFIX "/home/martin/University/GraphicsProgramming/Computer-Graphics-Labs")
 endif()
 string(REGEX REPLACE "/$" "" CMAKE_INSTALL_PREFIX "${CMAKE_INSTALL_PREFIX}")
 

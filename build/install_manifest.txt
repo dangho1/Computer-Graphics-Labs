@@ -1,1 +1,1 @@
-/home/dangho/gltf_viewer/bin/model_viewer
+/home/martin/University/GraphicsProgramming/Computer-Graphics-Labs/bin/model_viewer
