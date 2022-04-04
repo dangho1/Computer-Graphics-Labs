@@ -109,6 +109,9 @@ void draw_scene(Context &ctx)
     ImGui::ColorEdit3("Diffuse Color", &ctx.diffuseColor[0]);
     //glm::vec3 diffuseColor = glm::vec3(0.0f, 0.7f, 0.0f);
     glUniform3fv(glGetUniformLocation(ctx.program, "u_diffuseColor"), 1, &ctx.diffuseColor[0]);
+
+    
+    //glUniform1f(glGetUniformLocation(ctx.program, ""));
     
 
     // Draw scene

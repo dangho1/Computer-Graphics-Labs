@@ -53,8 +53,17 @@ void main()
 
     // Calculate the diffuse (Lambertian) reflection term
     float diffuse = max(0.0, dot(N, L));
+
+    vec3 viewDir = normalize(vec3(0.0f, 0.0f, -1.0f) - positionEye);
+
+    vec3 H = normalize(L + viewDir);
+    float Ka = 0.5;
+    float Kd = 0.5;
+    float Ks = 0.5;
+    float alpha= 3.0;
+    vec3  I = Ka + (Kd * L * diffuse) + (Ks * L * pow(dot(N, H), alpha));
     //u_diffuseColor = a_color;
     // Multiply the diffuse reflection term with the base surface color
-    v_color = diffuse * u_diffuseColor;
+    v_color = diffuse * u_diffuseColor + I;
     //v_color = 0.5 * a_normal  + 0.5;
 }
