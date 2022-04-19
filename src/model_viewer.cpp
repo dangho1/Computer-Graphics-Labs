@@ -110,6 +110,13 @@ void draw_scene(Context &ctx)
     //glm::vec3 diffuseColor = glm::vec3(0.0f, 0.7f, 0.0f);
     glUniform3fv(glGetUniformLocation(ctx.program, "u_diffuseColor"), 1, &ctx.diffuseColor[0]);
 
+    glm::vec3 ambientColor = glm::vec3(1.0f, 0.0f, 0.0f);
+    glUniform3fv(glGetUniformLocation(ctx.program, "u_ambientColor"), 1, &ambientColor[0]);
+
+    glm::vec3 specularColor = glm::vec3(1.0f, 1.0f, 1.0f);
+    glUniform3fv(glGetUniformLocation(ctx.program, "u_specularColor"), 1, &specularColor[0]);
+
+    glUniform1f(glGetUniformLocation(ctx.program, "u_specularPower"), 120.0); // ALPHA
     
     //glUniform1f(glGetUniformLocation(ctx.program, ""));
     

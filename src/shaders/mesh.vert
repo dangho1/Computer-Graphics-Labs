@@ -8,6 +8,10 @@ uniform mat4 u_projection;
 uniform mat4 u_model;
 uniform vec3 u_diffuseColor; // The diffuse surface color of the model
 uniform vec3 u_lightPosition; // The position of your light source
+
+uniform vec3 u_ambientColor;
+uniform vec3 u_specularColor;
+uniform float u_specularPower;
 // ...
 
 // Vertex inputs (attributes from vertex buffers)
@@ -56,14 +60,23 @@ void main()
 
     vec3 viewDir = normalize(vec3(0.0f, 0.0f, -1.0f) - positionEye);
 
+
+    float K_a = 0.2;
+    float K_d = 1;
+    float K_s = 1;
     vec3 H = normalize(L + viewDir);
-    float Ka = 0.5;
-    float Kd = 0.5;
-    float Ks = 0.5;
-    float alpha= 3.0;
-    vec3  I = Ka + (Kd * L * diffuse) + (Ks * L * pow(dot(N, H), alpha));
-    //u_diffuseColor = a_color;
+
+    //vec3 H = (L + positionEye) / abs(L + positionEye);
+
+    vec3 I_a = K_a * u_ambientColor;
+
+    vec3 I_d = K_d * u_diffuseColor * diffuse;
+
+    vec3 I_s = K_s * u_specularColor * pow(dot(N, H), u_specularPower);
+
+    v_color = I_a + I_d + I_s;
+
     // Multiply the diffuse reflection term with the base surface color
-    v_color = diffuse * u_diffuseColor + I;
+    //v_color = diffuse * u_diffuseColor + I;
     //v_color = 0.5 * a_normal  + 0.5;
 }
