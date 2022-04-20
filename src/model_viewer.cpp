@@ -33,11 +33,17 @@ struct Context {
     GLuint program;
     GLuint emptyVAO;
     float elapsedTime;
-    glm::vec3 myColor;
-    glm::vec3 lightPosition;
-    glm::vec3 diffuseColor;
     std::string gltfFilename = "armadillo.gltf";
     // Add more variables here...
+    glm::vec3 backgroundColor;
+    glm::vec3 lightPosition;
+    glm::vec3 diffuseColor;
+    glm::vec3 ambientColor;
+    glm::vec3 specularColor;
+    int specularPower;
+    float zoomFactor;
+    int displayNormals;
+    int displayOrtho;
 };
 
 // Returns the absolute path to the src/shader directory
@@ -62,12 +68,26 @@ std::string gltf_dir(void)
     return rootDir + "/assets/gltf/";
 }
 
+void init_values(Context &ctx)
+{
+    ctx.backgroundColor = glm::vec3(0.8f, 0.8f, 0.8f);
+    ctx.lightPosition = glm::vec3(0.0f, 0.0f, -1.0f);
+    ctx.diffuseColor = glm::vec3(0.0f, 0.7f, 0.0f);
+    ctx.ambientColor = glm::vec3(0.7f, 0.0f, 0.0f);
+    ctx.specularColor = glm::vec3(1.0f, 1.0f, 1.0f);
+    ctx.specularPower = 100;
+    ctx.zoomFactor = 90.0f;
+    ctx.displayNormals = 0;
+    ctx.displayOrtho = 0;
+}
+
 void do_initialization(Context &ctx)
 {
     ctx.program = cg::load_shader_program(shader_dir() + "mesh.vert", shader_dir() + "mesh.frag");
 
     gltf::load_gltf_asset(ctx.gltfFilename, gltf_dir(), ctx.asset);
     gltf::create_drawables_from_gltf_asset(ctx.drawables, ctx.asset);
+    init_values(ctx);
 }
 
 void draw_scene(Context &ctx)
@@ -80,46 +100,52 @@ void draw_scene(Context &ctx)
 
     // Define per-scene uniforms
     glUniform1f(glGetUniformLocation(ctx.program, "u_time"), ctx.elapsedTime);
+    // ...
 
-    ImGui::ColorEdit3("My color", &ctx.myColor[0]);
+    ImGui::ColorEdit3("My color", &ctx.backgroundColor[0]);
 
     glm::mat4 projection = glm::mat4(1.0f);
     glUniformMatrix4fv(glGetUniformLocation(ctx.program, "u_projection"), 1, GL_FALSE,
                        &projection[0][0]);
-                       
-    //Translate moves the object
+
     glm::mat4 model_trans = glm::translate(glm::mat4(1.0f), glm::vec3(0.5f, -0.3f, 0.0f));
-    //Scale scales the object
     glm::mat4 model_scale = glm::scale(glm::mat4(1.0f), glm::vec3(0.5f, 0.5f, 0.5f));
-    //Rotates the object
-    glm::mat4 model_rot = glm::rotate(glm::mat4(1.0f), 180.0f, glm::vec3(1.0f, 0.0f, 0.0f));
-    glm::mat4 model = model_trans * model_scale * model_rot;
+    glm::mat4 model_rot =
+        glm::rotate(glm::mat4(1.0f), glm::radians(90.0f), glm::vec3(1.0f, 0.0f, 0.0f));
+    glm::mat4 model = model_scale * model_rot;
     glUniformMatrix4fv(glGetUniformLocation(ctx.program, "u_model"), 1, GL_FALSE, &model[0][0]);
 
     glm::mat4 look = glm::lookAt(glm::vec3(0.0f, 0.0f, -1.0f), glm::vec3(0.0f, 0.0f, 0.0f),
                                  glm::vec3(0.0f, 1.0f, 0.0f));
 
-    glm::mat4 perspective = glm::perspective(180.0f, 1.0f, 0.1f, 100.0f);
+    glm::mat4 perspective = glm::perspective(glm::radians(ctx.zoomFactor), 1.0f, 0.1f, 100.0f);
 
     glm::mat4 view = perspective * look * glm::mat4(ctx.trackball.orient);
     glUniformMatrix4fv(glGetUniformLocation(ctx.program, "u_view"), 1, GL_FALSE, &view[0][0]);
+
     ImGui::ColorEdit3("Lightning position", &ctx.lightPosition[0]);
-    //glm::vec3 lightPosition = glm::vec3(.0f, 1.0f, -1.0f);
     glUniform3fv(glGetUniformLocation(ctx.program, "u_lightPosition"), 1, &ctx.lightPosition[0]);
+
     ImGui::ColorEdit3("Diffuse Color", &ctx.diffuseColor[0]);
-    //glm::vec3 diffuseColor = glm::vec3(0.0f, 0.7f, 0.0f);
     glUniform3fv(glGetUniformLocation(ctx.program, "u_diffuseColor"), 1, &ctx.diffuseColor[0]);
 
-    glm::vec3 ambientColor = glm::vec3(1.0f, 0.0f, 0.0f);
-    glUniform3fv(glGetUniformLocation(ctx.program, "u_ambientColor"), 1, &ambientColor[0]);
+    ImGui::ColorEdit3("Ambient Color", &ctx.ambientColor[0]);
+    glUniform3fv(glGetUniformLocation(ctx.program, "u_ambientColor"), 1, &ctx.ambientColor[0]);
 
-    glm::vec3 specularColor = glm::vec3(1.0f, 1.0f, 1.0f);
-    glUniform3fv(glGetUniformLocation(ctx.program, "u_specularColor"), 1, &specularColor[0]);
+    ImGui::ColorEdit3("Specular Color", &ctx.specularColor[0]);
+    glUniform3fv(glGetUniformLocation(ctx.program, "u_specularColor"), 1, &ctx.specularColor[0]);
 
-    glUniform1f(glGetUniformLocation(ctx.program, "u_specularPower"), 120.0); // ALPHA
-    
-    //glUniform1f(glGetUniformLocation(ctx.program, ""));
-    
+    ImGui::SliderInt("Specular Power", &ctx.specularPower, 1, 1000);
+    glUniform1i(glGetUniformLocation(ctx.program, "u_specularPower"), ctx.specularPower);  // ALPHA
+
+    ImGui::Checkbox("Display normals RGB", (bool *)&ctx.displayNormals);
+    glUniform1i(glGetUniformLocation(ctx.program, "u_displayNormals"), ctx.displayNormals);
+
+    ImGui::Checkbox("Ortho projection", (bool *)&ctx.displayOrtho);
+    glUniform1i(glGetUniformLocation(ctx.program, "u_displayOrtho"), ctx.displayOrtho);
+
+    glm::mat4 ortho = glm::ortho(-1.0f, 1.0f, -1.0f, 1.0f);
+    glUniformMatrix4fv(glGetUniformLocation(ctx.program, "u_ortho"), 1, GL_FALSE, &ortho[0][0]);
 
     // Draw scene
     for (unsigned i = 0; i < ctx.asset.nodes.size(); ++i) {
@@ -147,7 +173,7 @@ void do_rendering(Context &ctx)
     cg::reset_gl_render_state();
 
     // Clear color and depth buffers
-    glClearColor(ctx.myColor[0], ctx.myColor[1], ctx.myColor[2], 0.0f);
+    glClearColor(ctx.backgroundColor[0], ctx.backgroundColor[1], ctx.backgroundColor[2], 0.0f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
     draw_scene(ctx);
@@ -208,9 +234,14 @@ void cursor_pos_callback(GLFWwindow *window, double x, double y)
 
 void scroll_callback(GLFWwindow *window, double x, double y)
 {
+    Context *ctx = static_cast<Context *>(glfwGetWindowUserPointer(window));
+
+    if (ctx->zoomFactor >= 1.0f && ctx->zoomFactor <= 180.0f) ctx->zoomFactor -= y;
+    if (ctx->zoomFactor <= 1.0f) ctx->zoomFactor = 1.0f;
+    if (ctx->zoomFactor >= 180.0f) ctx->zoomFactor = 180.0f;
     // Forward event to ImGui
-    ImGui_ImplGlfw_ScrollCallback(window, x, y);
-    if (ImGui::GetIO().WantCaptureMouse) return;
+    // ImGui_ImplGlfw_ScrollCallback(window, x, y);
+    // if (ImGui::GetIO().WantCaptureMouse) return;
 }
 
 void resize_callback(GLFWwindow *window, int width, int height)
@@ -270,7 +301,7 @@ int main(int argc, char *argv[])
         ImGui_ImplOpenGL3_NewFrame();
         ImGui_ImplGlfw_NewFrame();
         ImGui::NewFrame();
-        //ImGui::ShowDemoWindow();
+        // ImGui::ShowDemoWindow();
         do_rendering(ctx);
         ImGui::Render();
         ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
