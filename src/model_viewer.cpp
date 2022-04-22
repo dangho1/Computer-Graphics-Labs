@@ -33,7 +33,7 @@ struct Context {
     GLuint program;
     GLuint emptyVAO;
     float elapsedTime;
-    std::string gltfFilename = "armadillo.gltf";
+    std::string gltfFilename = "bunny.gltf";
     // Add more variables here...
     glm::vec3 backgroundColor;
     glm::vec3 lightPosition;
@@ -44,6 +44,7 @@ struct Context {
     float zoomFactor;
     int displayNormals;
     int displayOrtho;
+    int toggleGammaCorrection;
 };
 
 // Returns the absolute path to the src/shader directory
@@ -72,13 +73,14 @@ void init_values(Context &ctx)
 {
     ctx.backgroundColor = glm::vec3(0.8f, 0.8f, 0.8f);
     ctx.lightPosition = glm::vec3(0.0f, 0.0f, -1.0f);
-    ctx.diffuseColor = glm::vec3(0.0f, 0.7f, 0.0f);
-    ctx.ambientColor = glm::vec3(0.7f, 0.0f, 0.0f);
+    ctx.diffuseColor = glm::vec3(0.0f, 1.0f, 0.0f);
+    ctx.ambientColor = glm::vec3(1.0f, 0.0f, 0.0f);
     ctx.specularColor = glm::vec3(1.0f, 1.0f, 1.0f);
     ctx.specularPower = 100;
     ctx.zoomFactor = 90.0f;
     ctx.displayNormals = 0;
     ctx.displayOrtho = 0;
+    ctx.toggleGammaCorrection = 0;
 }
 
 void do_initialization(Context &ctx)
@@ -146,6 +148,10 @@ void draw_scene(Context &ctx)
 
     glm::mat4 ortho = glm::ortho(-1.0f, 1.0f, -1.0f, 1.0f);
     glUniformMatrix4fv(glGetUniformLocation(ctx.program, "u_ortho"), 1, GL_FALSE, &ortho[0][0]);
+
+    ImGui::Checkbox("Gamma correction", (bool *)&ctx.toggleGammaCorrection);
+    glUniform1i(glGetUniformLocation(ctx.program, "u_toggleGammaCorrection"),
+                ctx.toggleGammaCorrection);
 
     // Draw scene
     for (unsigned i = 0; i < ctx.asset.nodes.size(); ++i) {
