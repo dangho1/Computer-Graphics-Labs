@@ -33,7 +33,7 @@ struct Context {
     GLuint program;
     GLuint emptyVAO;
     float elapsedTime;
-    std::string gltfFilename = "bunny.gltf";
+    std::string gltfFilename = "teapot.gltf";
     // Add more variables here...
     glm::vec3 backgroundColor;
     glm::vec3 lightPosition;
@@ -45,6 +45,11 @@ struct Context {
     int displayNormals;
     int displayOrtho;
     int toggleGammaCorrection;
+    GLuint cubemap;
+    int toggleEnvironmentMapping;
+    std::vector<std::string> textures = {"0.125", "0.5", "2", "8", "32", "128", "512", "2048"};
+    int texture_index = 0;
+    std::vector<GLuint> prefiltered;
 };
 
 // Returns the absolute path to the src/shader directory
@@ -69,6 +74,19 @@ std::string gltf_dir(void)
     return rootDir + "/assets/gltf/";
 }
 
+// Returns the absolute path to the assets/cubemaps directory
+std::string cubemap_dir(void)
+{
+    std::string rootDir = cg::get_env_var("MODEL_VIEWER_ROOT");
+    if (rootDir.empty()) {
+        std::cout << "Error: MODEL_VIEWER_ROOT is not set." << std::endl;
+        std::exit(EXIT_FAILURE);
+    }
+    return rootDir + "/assets/cubemaps/";
+}
+
+
+
 void init_values(Context &ctx)
 {
     ctx.backgroundColor = glm::vec3(0.8f, 0.8f, 0.8f);
@@ -81,6 +99,11 @@ void init_values(Context &ctx)
     ctx.displayNormals = 0;
     ctx.displayOrtho = 0;
     ctx.toggleGammaCorrection = 0;
+    ctx.toggleEnvironmentMapping = 0;
+    for(int i = 0; i < 8; ++i) {
+        GLuint texture = cg::load_cubemap(cubemap_dir() + "/Forrest/prefiltered/" + ctx.textures[i] + "/");
+        ctx.prefiltered.push_back(texture);
+    }
 }
 
 void do_initialization(Context &ctx)
@@ -94,17 +117,25 @@ void do_initialization(Context &ctx)
 
 void draw_scene(Context &ctx)
 {
+
     // Activate shader program
     glUseProgram(ctx.program);
 
     // Set render state
     glEnable(GL_DEPTH_TEST);  // Enable Z-buffering
+    
+    
 
     // Define per-scene uniforms
     glUniform1f(glGetUniformLocation(ctx.program, "u_time"), ctx.elapsedTime);
     // ...
+    glActiveTexture(GL_TEXTURE0);
+    ctx.cubemap = ctx.prefiltered[ctx.texture_index];
+    glBindTexture(GL_TEXTURE_CUBE_MAP, ctx.cubemap);
+    glUniform1i(glGetUniformLocation(ctx.program, "u_cubemap"),
+                GL_TEXTURE0);
 
-    ImGui::ColorEdit3("My color", &ctx.backgroundColor[0]);
+    ImGui::ColorEdit3("Background Color", &ctx.backgroundColor[0]);
 
     glm::mat4 projection = glm::mat4(1.0f);
     glUniformMatrix4fv(glGetUniformLocation(ctx.program, "u_projection"), 1, GL_FALSE,
@@ -152,6 +183,15 @@ void draw_scene(Context &ctx)
     ImGui::Checkbox("Gamma correction", (bool *)&ctx.toggleGammaCorrection);
     glUniform1i(glGetUniformLocation(ctx.program, "u_toggleGammaCorrection"),
                 ctx.toggleGammaCorrection);
+
+    ImGui::Checkbox("Environment mapping", (bool *)&ctx.toggleEnvironmentMapping);
+    glUniform1i(glGetUniformLocation(ctx.program, "u_toggleEnvironmentMapping"),
+                ctx.toggleEnvironmentMapping);
+
+    ImGui::SliderInt("Cube roughness", &ctx.texture_index, 0, 7);
+    glUniform1i(glGetUniformLocation(ctx.program, "u_texture_index"), ctx.texture_index);
+
+    
 
     // Draw scene
     for (unsigned i = 0; i < ctx.asset.nodes.size(); ++i) {

@@ -45,7 +45,7 @@ void main()
     L = normalize(u_lightPosition - positionEye);
 
     // Calculate the view vector (the negative of the view-space position)
-    V = normalize(vec3(0.0f, 0.0f, -1.0f) - positionEye);
+    V = normalize(vec3(0.0f, 0.0f, 0.0f) - positionEye);
 
     // Calculate the diffuse (Lambertian) reflection term
     float diffuse = max(0.0, dot(N, L));
@@ -61,4 +61,5 @@ void main()
     vec3 I_d = K_d * u_diffuseColor * diffuse;
 
     v_color = I_a + I_d + a_normal * u_displayNormals;
+   
 }
