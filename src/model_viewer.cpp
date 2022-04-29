@@ -33,7 +33,7 @@ struct Context {
     GLuint program;
     GLuint emptyVAO;
     float elapsedTime;
-    std::string gltfFilename = "teapot.gltf";
+    std::string gltfFilename = "lpshead.gltf";
     // Add more variables here...
     glm::vec3 backgroundColor;
     glm::vec3 lightPosition;
@@ -47,9 +47,11 @@ struct Context {
     int toggleGammaCorrection;
     GLuint cubemap;
     int toggleEnvironmentMapping;
-    std::vector<std::string> textures = {"0.125", "0.5", "2", "8", "32", "128", "512", "2048"};
+    std::vector<std::string> texture_powers = {"0.125", "0.5", "2", "8", "32", "128", "512", "2048"};
     int texture_index = 0;
     std::vector<GLuint> prefiltered;
+    gltf::TextureList textures;
+    GLuint texture_id;
 };
 
 // Returns the absolute path to the src/shader directory
@@ -101,9 +103,10 @@ void init_values(Context &ctx)
     ctx.toggleGammaCorrection = 0;
     ctx.toggleEnvironmentMapping = 0;
     for(int i = 0; i < 8; ++i) {
-        GLuint texture = cg::load_cubemap(cubemap_dir() + "/Forrest/prefiltered/" + ctx.textures[i] + "/");
+        GLuint texture = cg::load_cubemap(cubemap_dir() + "/Forrest/prefiltered/" + ctx.texture_powers[i] + "/");
         ctx.prefiltered.push_back(texture);
     }
+    
 }
 
 void do_initialization(Context &ctx)
@@ -112,6 +115,8 @@ void do_initialization(Context &ctx)
 
     gltf::load_gltf_asset(ctx.gltfFilename, gltf_dir(), ctx.asset);
     gltf::create_drawables_from_gltf_asset(ctx.drawables, ctx.asset);
+    gltf::create_textures_from_gltf_asset(ctx.textures, ctx.asset);
+
     init_values(ctx);
 }
 
@@ -129,12 +134,7 @@ void draw_scene(Context &ctx)
     // Define per-scene uniforms
     glUniform1f(glGetUniformLocation(ctx.program, "u_time"), ctx.elapsedTime);
     // ...
-    glActiveTexture(GL_TEXTURE0);
-    ctx.cubemap = ctx.prefiltered[ctx.texture_index];
-    glBindTexture(GL_TEXTURE_CUBE_MAP, ctx.cubemap);
-    glUniform1i(glGetUniformLocation(ctx.program, "u_cubemap"),
-                GL_TEXTURE0);
-
+    
     ImGui::ColorEdit3("Background Color", &ctx.backgroundColor[0]);
 
     glm::mat4 projection = glm::mat4(1.0f);
@@ -191,15 +191,55 @@ void draw_scene(Context &ctx)
     ImGui::SliderInt("Cube roughness", &ctx.texture_index, 0, 7);
     glUniform1i(glGetUniformLocation(ctx.program, "u_texture_index"), ctx.texture_index);
 
-    
 
+    glActiveTexture(GL_TEXTURE0);
+    ctx.cubemap = ctx.prefiltered[ctx.texture_index];
+    glBindTexture(GL_TEXTURE_CUBE_MAP, ctx.cubemap);
+    glUniform1i(glGetUniformLocation(ctx.program, "u_cubemap"),
+                GL_TEXTURE0);
+                
+    std::cout<<ctx.textures.size() << "---------TEX MANEN\n";
+    std::cout<<ctx.asset.nodes.size() << " ASS MANEN\n";
+
+    //std::cout<< "TEXTURE SIZE";
+    //std::cout<< ctx.textures[0] <<"\n";
+    
     // Draw scene
     for (unsigned i = 0; i < ctx.asset.nodes.size(); ++i) {
         const gltf::Node &node = ctx.asset.nodes[i];
         const gltf::Drawable &drawable = ctx.drawables[node.mesh];
 
         // Define per-object uniforms
-        // ...
+        // ... ctx.textures.push_back(0);
+        const gltf::Mesh &mesh = ctx.asset.meshes[node.mesh];
+        if (mesh.primitives[0].hasMaterial) {
+            const gltf::Primitive &primitive = mesh.primitives[0];
+            const gltf::Material &material = ctx.asset.materials[primitive.material];
+            const gltf::PBRMetallicRoughness &pbr = material.pbrMetallicRoughness;
+            // std::cout<< "PBR index";
+            // std::cout<< pbr.baseColorTexture.index << "\n";
+
+            // Define material textures and uniforms
+            // ...
+
+
+
+
+            if (pbr.hasBaseColorTexture) {
+                ctx.texture_id = ctx.textures[pbr.baseColorTexture.index];
+                std::cout <<ctx.texture_id << "\n";
+            // Bind texture and define uniforms...
+                glActiveTexture(GL_TEXTURE0);
+                std::cout <<GL_TEXTURE1 << "GL TEXTURE\n";
+                glBindTexture(GL_TEXTURE_2D, ctx.texture_id);
+                glUniform1i(glGetUniformLocation(ctx.program, "u_texture0"), 0);
+            }
+        } else {
+            // Need to handle this case as well, by telling
+            // the shader that no texture is available
+            //glUniform1i(glGetUniformLocation(ctx.program, "u_texture0"), 0);
+        }
+        
 
         // Draw object
         glBindVertexArray(drawable.vao);
@@ -207,7 +247,7 @@ void draw_scene(Context &ctx)
                        (GLvoid *)(intptr_t)drawable.indexByteOffset);
         glBindVertexArray(0);
     }
-
+    
     // Clean up
     cg::reset_gl_render_state();
     glUseProgram(0);

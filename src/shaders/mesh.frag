@@ -8,6 +8,8 @@ uniform int u_specularPower;
 uniform int u_toggleGammaCorrection;
 uniform int u_toggleEnvironmentMapping;
 uniform samplerCube u_cubemap;
+uniform sampler2D u_texture0; // texture sampler
+
 
 
 // Fragment shader inputs
@@ -18,7 +20,7 @@ in vec3 V;
 
 // Fragment shader outputs
 out vec4 frag_color;
-
+in vec2 v_texcoord_0;
 
 void main()
 {
@@ -35,6 +37,8 @@ void main()
     //Reflection vector
     vec3 R = reflect(-V, N);
 
+    /*
+
     vec3 color = texture(u_cubemap, R).rgb;
  
     if (u_toggleGammaCorrection == 1)
@@ -42,5 +46,7 @@ void main()
     else
         frag_color = vec4((1-u_toggleEnvironmentMapping) * v_color + (color * u_toggleEnvironmentMapping) + I_s, 1.0);
     
-        
+    */
+    vec4 color = texture(u_texture0, v_texcoord_0).rgba;
+    frag_color = color;
 }
