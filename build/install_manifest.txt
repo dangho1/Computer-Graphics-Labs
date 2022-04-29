@@ -1,1 +1,0 @@
-/home/martin/University/GraphicsProgramming/Computer-Graphics-Labs/bin/model_viewer
