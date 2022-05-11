@@ -44,10 +44,12 @@ struct Context {
     float zoomFactor;
     int displayNormals;
     int displayOrtho;
-    int toggleGammaCorrection;
+    int tglGmaCorr;
     GLuint cubemap;
-    int toggleEnvironmentMapping;
-    std::vector<std::string> texture_powers = {"0.125", "0.5", "2", "8", "32", "128", "512", "2048"};
+    int tglEnvMapping;
+    int tglTexMapping;
+    std::vector<std::string> texture_powers = {"0.125", "0.5", "2",   "8",
+                                               "32",    "128", "512", "2048"};
     int texture_index = 0;
     std::vector<GLuint> prefiltered;
     gltf::TextureList textures;
@@ -87,26 +89,25 @@ std::string cubemap_dir(void)
     return rootDir + "/assets/cubemaps/";
 }
 
-
-
 void init_values(Context &ctx)
 {
     ctx.backgroundColor = glm::vec3(0.8f, 0.8f, 0.8f);
     ctx.lightPosition = glm::vec3(0.0f, 0.0f, -1.0f);
-    ctx.diffuseColor = glm::vec3(0.0f, 1.0f, 0.0f);
+    ctx.diffuseColor = glm::vec3(1.0f, 1.0f, 1.0f);
     ctx.ambientColor = glm::vec3(1.0f, 0.0f, 0.0f);
     ctx.specularColor = glm::vec3(1.0f, 1.0f, 1.0f);
     ctx.specularPower = 100;
     ctx.zoomFactor = 90.0f;
     ctx.displayNormals = 0;
     ctx.displayOrtho = 0;
-    ctx.toggleGammaCorrection = 0;
-    ctx.toggleEnvironmentMapping = 0;
-    for(int i = 0; i < 8; ++i) {
-        GLuint texture = cg::load_cubemap(cubemap_dir() + "/Forrest/prefiltered/" + ctx.texture_powers[i] + "/");
+    ctx.tglGmaCorr = 0;
+    ctx.tglEnvMapping = 0;
+    ctx.tglTexMapping = 0;
+    for (int i = 0; i < 8; ++i) {
+        GLuint texture =
+            cg::load_cubemap(cubemap_dir() + "/Forrest/prefiltered/" + ctx.texture_powers[i] + "/");
         ctx.prefiltered.push_back(texture);
     }
-    
 }
 
 void do_initialization(Context &ctx)
@@ -128,13 +129,11 @@ void draw_scene(Context &ctx)
 
     // Set render state
     glEnable(GL_DEPTH_TEST);  // Enable Z-buffering
-    
-    
 
     // Define per-scene uniforms
     glUniform1f(glGetUniformLocation(ctx.program, "u_time"), ctx.elapsedTime);
     // ...
-    
+
     ImGui::ColorEdit3("Background Color", &ctx.backgroundColor[0]);
 
     glm::mat4 projection = glm::mat4(1.0f);
@@ -180,66 +179,55 @@ void draw_scene(Context &ctx)
     glm::mat4 ortho = glm::ortho(-1.0f, 1.0f, -1.0f, 1.0f);
     glUniformMatrix4fv(glGetUniformLocation(ctx.program, "u_ortho"), 1, GL_FALSE, &ortho[0][0]);
 
-    ImGui::Checkbox("Gamma correction", (bool *)&ctx.toggleGammaCorrection);
-    glUniform1i(glGetUniformLocation(ctx.program, "u_toggleGammaCorrection"),
-                ctx.toggleGammaCorrection);
+    ImGui::Checkbox("Gamma correction", (bool *)&ctx.tglGmaCorr);
+    glUniform1i(glGetUniformLocation(ctx.program, "u_tglGmaCorr"), ctx.tglGmaCorr);
 
-    ImGui::Checkbox("Environment mapping", (bool *)&ctx.toggleEnvironmentMapping);
-    glUniform1i(glGetUniformLocation(ctx.program, "u_toggleEnvironmentMapping"),
-                ctx.toggleEnvironmentMapping);
+    ImGui::Checkbox("Environment mapping", (bool *)&ctx.tglEnvMapping);
+    glUniform1i(glGetUniformLocation(ctx.program, "u_tglEnvMapping"), ctx.tglEnvMapping);
 
-    ImGui::SliderInt("Cube roughness", &ctx.texture_index, 0, 7);
+    ImGui::Checkbox("Texture mapping", (bool *)&ctx.tglTexMapping);
+    glUniform1i(glGetUniformLocation(ctx.program, "u_tglTexMapping"), ctx.tglTexMapping);
+
+    ImGui::SliderInt("EM Glossiness", &ctx.texture_index, 0, 7);
     glUniform1i(glGetUniformLocation(ctx.program, "u_texture_index"), ctx.texture_index);
-
 
     glActiveTexture(GL_TEXTURE0);
     ctx.cubemap = ctx.prefiltered[ctx.texture_index];
     glBindTexture(GL_TEXTURE_CUBE_MAP, ctx.cubemap);
-    glUniform1i(glGetUniformLocation(ctx.program, "u_cubemap"),
-                GL_TEXTURE0);
-                
-    std::cout<<ctx.textures.size() << "---------TEX MANEN\n";
-    std::cout<<ctx.asset.nodes.size() << " ASS MANEN\n";
+    glUniform1i(glGetUniformLocation(ctx.program, "u_cubemap"), GL_TEXTURE0);
 
-    //std::cout<< "TEXTURE SIZE";
-    //std::cout<< ctx.textures[0] <<"\n";
-    
     // Draw scene
     for (unsigned i = 0; i < ctx.asset.nodes.size(); ++i) {
         const gltf::Node &node = ctx.asset.nodes[i];
         const gltf::Drawable &drawable = ctx.drawables[node.mesh];
 
         // Define per-object uniforms
-        // ... ctx.textures.push_back(0);
+        // ...
+
+        // ctx.textures.push_back(0);
         const gltf::Mesh &mesh = ctx.asset.meshes[node.mesh];
         if (mesh.primitives[0].hasMaterial) {
             const gltf::Primitive &primitive = mesh.primitives[0];
             const gltf::Material &material = ctx.asset.materials[primitive.material];
             const gltf::PBRMetallicRoughness &pbr = material.pbrMetallicRoughness;
-            // std::cout<< "PBR index";
-            // std::cout<< pbr.baseColorTexture.index << "\n";
 
             // Define material textures and uniforms
             // ...
 
-
-
-
             if (pbr.hasBaseColorTexture) {
                 ctx.texture_id = ctx.textures[pbr.baseColorTexture.index];
-                std::cout <<ctx.texture_id << "\n";
-            // Bind texture and define uniforms...
-                glActiveTexture(GL_TEXTURE0);
-                std::cout <<GL_TEXTURE1 << "GL TEXTURE\n";
+
+                // Bind texture and define uniforms...
+
+                glActiveTexture(GL_TEXTURE4);
                 glBindTexture(GL_TEXTURE_2D, ctx.texture_id);
-                glUniform1i(glGetUniformLocation(ctx.program, "u_texture0"), 0);
+                glUniform1i(glGetUniformLocation(ctx.program, "u_texture0"), 4);
             }
         } else {
             // Need to handle this case as well, by telling
             // the shader that no texture is available
-            //glUniform1i(glGetUniformLocation(ctx.program, "u_texture0"), 0);
+            ctx.tglTexMapping = 0;
         }
-        
 
         // Draw object
         glBindVertexArray(drawable.vao);
@@ -247,7 +235,7 @@ void draw_scene(Context &ctx)
                        (GLvoid *)(intptr_t)drawable.indexByteOffset);
         glBindVertexArray(0);
     }
-    
+
     // Clean up
     cg::reset_gl_render_state();
     glUseProgram(0);

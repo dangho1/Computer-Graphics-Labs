@@ -19,7 +19,7 @@ uniform mat4 u_ortho;
 layout(location = 0) in vec4 a_position;
 in vec3 a_color;
 layout(location = 2) in vec3 a_normal;
-in vec2 a_texcoord_0;
+layout(location = 3) in vec2 a_texcoord_0;
 
 // Vertex shader outputs
 out vec3 v_color;

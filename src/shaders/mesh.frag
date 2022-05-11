@@ -5,8 +5,9 @@
 uniform vec3 u_specularColor;
 uniform int u_specularPower;
 
-uniform int u_toggleGammaCorrection;
-uniform int u_toggleEnvironmentMapping;
+uniform int u_tglGmaCorr;
+uniform int u_tglEnvMapping;
+uniform int u_tglTexMapping;
 uniform samplerCube u_cubemap;
 uniform sampler2D u_texture0; // texture sampler
 
@@ -37,16 +38,23 @@ void main()
     //Reflection vector
     vec3 R = reflect(-V, N);
 
-    /*
 
-    vec3 color = texture(u_cubemap, R).rgb;
- 
-    if (u_toggleGammaCorrection == 1)
-        frag_color = vec4((1-u_toggleEnvironmentMapping) * output_color + (color * u_toggleEnvironmentMapping) + I_s, 1.0);
+    if (u_tglTexMapping == 1)
+    {
+        vec4 textureColor = texture(u_texture0, v_texcoord_0).rgba;
+
+        if (u_tglGmaCorr == 1)
+            frag_color = vec4((1-u_tglEnvMapping) * output_color + I_s, 1.0) * textureColor;
+        else
+            frag_color = vec4((1-u_tglEnvMapping) * v_color + I_s, 1.0) * textureColor;
+    }
     else
-        frag_color = vec4((1-u_toggleEnvironmentMapping) * v_color + (color * u_toggleEnvironmentMapping) + I_s, 1.0);
-    
-    */
-    vec4 color = texture(u_texture0, v_texcoord_0).rgba;
-    frag_color = color;
+    {
+        vec3 cubeMapColor = texture(u_cubemap, R).rgb;
+
+        if (u_tglGmaCorr == 1)
+            frag_color = vec4((1-u_tglEnvMapping) * output_color + (cubeMapColor * u_tglEnvMapping) + I_s, 1.0);
+        else
+            frag_color = vec4((1-u_tglEnvMapping) * v_color + (cubeMapColor * u_tglEnvMapping) + I_s, 1.0);
+    }
 }
