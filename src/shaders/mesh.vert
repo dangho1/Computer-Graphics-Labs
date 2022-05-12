@@ -8,9 +8,6 @@ uniform mat4 u_projection;
 uniform mat4 u_model;
 uniform vec3 u_lightPosition; // The position of your light source
 
-uniform vec3 u_diffuseColor; // The diffuse surface color of the model
-uniform vec3 u_ambientColor;
-
 uniform int u_displayNormals;
 uniform int u_displayOrtho;
 uniform mat4 u_ortho;
@@ -49,20 +46,7 @@ void main()
     // Calculate the view vector (the negative of the view-space position)
     V = normalize(vec3(0.0f, 0.0f, 0.0f) - positionEye);
 
-    // Calculate the diffuse (Lambertian) reflection term
-    float diffuse = max(0.0, dot(N, L));
-
-    // Coefficients
-    float K_d = 1;
-    float K_a = K_d*0.01;
-    
-    // Ambient light
-    vec3 I_a = K_a * u_ambientColor;
-
-    // Diffuse light
-    vec3 I_d = K_d * u_diffuseColor * diffuse;
-
-    v_color = I_a + I_d + a_normal * u_displayNormals;
+    v_color = a_normal * u_displayNormals;
    
     v_texcoord_0 = a_texcoord_0;
 }

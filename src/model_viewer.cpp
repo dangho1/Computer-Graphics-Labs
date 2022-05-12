@@ -23,6 +23,13 @@
 #include <iostream>
 
 // Struct for our application context
+struct ShadowCastingLight {
+    glm::vec3 position;      // Light source position
+    glm::mat4 shadowMatrix;  // Camera matrix for shadowmap
+    GLuint shadowmap;        // Depth texture
+    GLuint shadowFBO;        // Depth framebuffer
+    float shadowBias;        // Bias for depth comparison
+};
 struct Context {
     int width = 512;
     int height = 512;
@@ -54,6 +61,11 @@ struct Context {
     std::vector<GLuint> prefiltered;
     gltf::TextureList textures;
     GLuint texture_id;
+
+    ShadowCastingLight light;
+    GLuint shadowProgram;
+    bool showShadowmap = false;
+    bool tglShadows = false;
 };
 
 // Returns the absolute path to the src/shader directory
@@ -117,6 +129,12 @@ void do_initialization(Context &ctx)
     gltf::load_gltf_asset(ctx.gltfFilename, gltf_dir(), ctx.asset);
     gltf::create_drawables_from_gltf_asset(ctx.drawables, ctx.asset);
     gltf::create_textures_from_gltf_asset(ctx.textures, ctx.asset);
+
+    ctx.shadowProgram =
+        cg::load_shader_program(shader_dir() + "shadow.vert", shader_dir() + "shadow.frag");
+
+    ctx.light.shadowmap = cg::create_depth_texture(512, 512);
+    ctx.light.shadowFBO = cg::create_depth_framebuffer(ctx.light.shadowmap);
 
     init_values(ctx);
 }
@@ -185,16 +203,28 @@ void draw_scene(Context &ctx)
     ImGui::Checkbox("Environment mapping", (bool *)&ctx.tglEnvMapping);
     glUniform1i(glGetUniformLocation(ctx.program, "u_tglEnvMapping"), ctx.tglEnvMapping);
 
+    ImGui::SliderInt("EM Glossiness", &ctx.texture_index, 0, 7);
+    glUniform1i(glGetUniformLocation(ctx.program, "u_texture_index"), ctx.texture_index);
+
     ImGui::Checkbox("Texture mapping", (bool *)&ctx.tglTexMapping);
     glUniform1i(glGetUniformLocation(ctx.program, "u_tglTexMapping"), ctx.tglTexMapping);
 
-    ImGui::SliderInt("EM Glossiness", &ctx.texture_index, 0, 7);
-    glUniform1i(glGetUniformLocation(ctx.program, "u_texture_index"), ctx.texture_index);
+    ImGui::Checkbox("Shadow map", &ctx.showShadowmap);
+
+    ImGui::Checkbox("Shadows", &ctx.tglShadows);
+    glUniform1i(glGetUniformLocation(ctx.program, "u_tglShadows"), (int)ctx.tglShadows);
 
     glActiveTexture(GL_TEXTURE0);
     ctx.cubemap = ctx.prefiltered[ctx.texture_index];
     glBindTexture(GL_TEXTURE_CUBE_MAP, ctx.cubemap);
     glUniform1i(glGetUniformLocation(ctx.program, "u_cubemap"), GL_TEXTURE0);
+
+    glActiveTexture(GL_TEXTURE1);
+    glBindTexture(GL_TEXTURE_2D, ctx.shadowProgram);
+    glUniform1i(glGetUniformLocation(ctx.program, "u_shadowMapTex"), 1);
+
+    glm::vec4 shadowFromView = glm::vec4(ctx.light.position, 0.5f);
+    glUniform4fv(glGetUniformLocation(ctx.program, "u_shadowFromView"), 1, &shadowFromView[0]);
 
     // Draw scene
     for (unsigned i = 0; i < ctx.asset.nodes.size(); ++i) {
@@ -241,6 +271,74 @@ void draw_scene(Context &ctx)
     glUseProgram(0);
 }
 
+// This file provides a starting point for generating shadow maps in part 4 of
+// assignment 3. Just copy this code to your model_viewer.cpp, and extend the
+// parts that are indicated in the comments.
+//
+
+// Struct for representing a shadow casting point light
+
+// Update the shadowmap and shadow matrix for a light source
+void update_shadowmap(Context &ctx, ShadowCastingLight &light, GLuint shadowFBO)
+{
+    // Set up rendering to shadowmap framebuffer
+    glBindFramebuffer(GL_DRAW_FRAMEBUFFER, shadowFBO);
+    if (shadowFBO) glViewport(0, 0, 512, 512);  // TODO Set viewport to shadowmap size
+    glClear(GL_DEPTH_BUFFER_BIT);               // Clear depth values to 1.0
+
+    // Set up pipeline
+    glUseProgram(ctx.shadowProgram);
+    glEnable(GL_DEPTH_TEST);  // Enable Z-buffering
+
+    // TODO Define view and projection matrices for the shadowmap camera. The
+    // view matrix should be a lookAt-matrix computed from the light source
+    // position, and the projection matrix should be a frustum that covers the
+    // parts of the scene that shall recieve shadows.
+
+    glm::mat4 proj = glm::mat4(1.0f);
+    glm::mat4 view = glm::mat4(1.0f);
+    // glm::mat4 model = glm::mat4(1.0f);
+
+    if (ctx.displayOrtho)
+        proj = glm::ortho(-float(ctx.width / ctx.height), float(ctx.width / ctx.height), -1.0f,
+                          1.0f, 1.f, 7.5f);
+    else
+        proj = glm::perspective(glm::radians(ctx.zoomFactor), float(ctx.width / ctx.height), 1.f,
+                                7.5f);
+
+    view = glm::lookAt(glm::vec3(1, 1, 1), glm::vec3(0, 0, 0), glm::vec3(0, 1, 0)) *
+           glm::mat4(-ctx.trackball.orient);
+
+    glUniformMatrix4fv(glGetUniformLocation(ctx.shadowProgram, "u_view"), 1, GL_FALSE, &view[0][0]);
+    glUniformMatrix4fv(glGetUniformLocation(ctx.shadowProgram, "u_proj"), 1, GL_FALSE, &proj[0][0]);
+
+    // Store updated shadow matrix for use in draw_scene()
+    light.shadowMatrix = proj * view;
+
+    // Draw scene
+    for (unsigned i = 0; i < ctx.asset.nodes.size(); ++i) {
+        const gltf::Node &node = ctx.asset.nodes[i];
+        const gltf::Drawable &drawable = ctx.drawables[node.mesh];
+
+        // TODO Define the model matrix for the drawable
+        glm::mat4 model = glm::mat4(1.0f);
+        glUniformMatrix4fv(glGetUniformLocation(ctx.shadowProgram, "u_model"), 1, GL_FALSE,
+                           &model[0][0]);
+
+        // Draw object
+        glBindVertexArray(drawable.vao);
+        glDrawElements(GL_TRIANGLES, drawable.indexCount, drawable.indexType,
+                       (GLvoid *)(intptr_t)drawable.indexByteOffset);
+        glBindVertexArray(0);
+    }
+
+    // Clean up
+    cg::reset_gl_render_state();
+    glUseProgram(0);
+    glViewport(0, 0, ctx.width, ctx.height);
+    glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
+}
+
 void do_rendering(Context &ctx)
 {
     // Clear render states at the start of each frame
@@ -250,7 +348,15 @@ void do_rendering(Context &ctx)
     glClearColor(ctx.backgroundColor[0], ctx.backgroundColor[1], ctx.backgroundColor[2], 0.0f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
+    update_shadowmap(ctx, ctx.light, ctx.light.shadowFBO);
     draw_scene(ctx);
+
+    if (ctx.showShadowmap) {
+        // Draw shadowmap on default screen framebuffer
+        glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
+        glClear(GL_COLOR_BUFFER_BIT);
+        update_shadowmap(ctx, ctx.light, 0);
+    }
 }
 
 void reload_shaders(Context *ctx)
