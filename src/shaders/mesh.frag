@@ -6,12 +6,14 @@ uniform vec3 u_diffuseColor; // The diffuse surface color of the model
 uniform vec3 u_ambientColor;
 uniform vec3 u_specularColor;
 uniform int u_specularPower;
+uniform float u_shadowBias;
 
 uniform int u_tglGmaCorr;
 uniform int u_tglEnvMapping;
 uniform int u_tglTexMapping;
 uniform int u_tglShadows;
-uniform vec4 u_shadowFromView;
+uniform int u_shadowFBO;
+uniform vec3 u_shadowFromView;
 uniform samplerCube u_cubemap;
 uniform sampler2D u_texture0; // texture sampler 0, texture map
 uniform sampler2D u_shadowMapTex; // texture sampler 1, shadow map
@@ -23,6 +25,8 @@ in vec3 v_color;
 in vec3 N;
 in vec3 L;
 in vec3 V;
+in vec3 L_shadow;
+in vec4 gl_FragCoord;
 
 // Fragment shader outputs
 out vec4 frag_color;
@@ -45,14 +49,23 @@ float shadowmap_visibility(sampler2D shadowmap, vec4 shadowPos, float bias)
 
 void main()
 {
+    float bias = u_shadowBias;
+    vec4 shadowPos = vec4(u_shadowFromView, 0.0f);
+    
     float K_s = 0.04;
-    float bias = 0.5;
+    //float u_shadowBias = 0.5;
     
     // Calculate the halfway vector
     vec3 H = normalize(L + V);
 
+    float diffuse;
+
     // Calculate the diffuse (Lambertian) reflection term
-    float diffuse = max(0.0, dot(N, L));
+    if(u_tglShadows == 1)
+        diffuse = max(0.0, dot(N, L_shadow));
+    else
+        diffuse = max(0.0, dot(N, L_shadow));
+
 
     // Coefficients
     float K_d = 1;
@@ -69,8 +82,8 @@ void main()
     
     if (u_tglShadows == 1)
     {
-        I_d = I_d * shadowmap_visibility(u_shadowMapTex, u_shadowFromView, bias);
-        I_s = I_s * shadowmap_visibility(u_shadowMapTex, u_shadowFromView, bias);
+        I_d = I_d * shadowmap_visibility(u_shadowMapTex, shadowPos, bias);
+        I_s = I_s * shadowmap_visibility(u_shadowMapTex, shadowPos, bias);
     }
         
     vec3 output_color = pow(v_color, vec3(1 / 2.2));
