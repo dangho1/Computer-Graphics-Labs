@@ -24,11 +24,11 @@
 
 // Struct for our application context
 struct ShadowCastingLight {
-    glm::vec3 position = glm::vec3(0.5f, 0.5f, -1.0f);     // Light source position
-    glm::mat4 shadowMatrix = glm::mat4(1.0f);  // Camera matrix for shadowmap
-    GLuint shadowmap;        // Depth texture
-    GLuint shadowFBO;        // Depth framebuffer
-    float shadowBias = 0;        // Bias for depth comparison
+    glm::vec3 position = glm::vec3(0.5f, 0.5f, -1.0f);  // Light source position
+    glm::mat4 shadowMatrix = glm::mat4(1.0f);           // Camera matrix for shadowmap
+    GLuint shadowmap;                                   // Depth texture
+    GLuint shadowFBO;                                   // Depth framebuffer
+    float shadowBias = 0;                               // Bias for depth comparison
 };
 struct Context {
     int width = 512;
@@ -40,7 +40,7 @@ struct Context {
     GLuint program;
     GLuint emptyVAO;
     float elapsedTime;
-    std::string gltfFilename = "gargo.gltf";
+    std::string gltfFilename = "lpshead.gltf";
     // Add more variables here...
     glm::vec3 backgroundColor;
     glm::vec3 lightPosition;
@@ -155,8 +155,7 @@ void draw_scene(Context &ctx)
     ImGui::ColorEdit3("Background Color", &ctx.backgroundColor[0]);
 
     glm::mat4 projection = glm::mat4(1.0f);
-    glUniformMatrix4fv(glGetUniformLocation(ctx.program, "u_projection"), 1, GL_FALSE,
-                       &projection[0][0]);
+    glUniformMatrix4fv(glGetUniformLocation(ctx.program, "u_proj"), 1, GL_FALSE, &projection[0][0]);
 
     glm::mat4 model_trans = glm::translate(glm::mat4(1.0f), glm::vec3(0.5f, -0.3f, 0.0f));
     glm::mat4 model_scale = glm::scale(glm::mat4(1.0f), glm::vec3(0.5f, 0.5f, 0.5f));
@@ -215,7 +214,7 @@ void draw_scene(Context &ctx)
     glUniform1i(glGetUniformLocation(ctx.program, "u_tglShadows"), (int)ctx.tglShadows);
 
     ImGui::SliderFloat("Shadow bias", &ctx.light.shadowBias, 0.0f, 1.0f);
-    glUniform1i(glGetUniformLocation(ctx.program, "u_shadowBias"), ctx.light.shadowBias);  
+    glUniform1i(glGetUniformLocation(ctx.program, "u_shadowBias"), ctx.light.shadowBias);
 
     ImGui::SliderFloat("Light source position x", &ctx.light.position[0], -1, 1);
     ImGui::SliderFloat("Light source position y", &ctx.light.position[1], -1, 1);
@@ -228,14 +227,13 @@ void draw_scene(Context &ctx)
     glUniform1i(glGetUniformLocation(ctx.program, "u_cubemap"), GL_TEXTURE0);
 
     glActiveTexture(GL_TEXTURE2);
-    glBindTexture(GL_TEXTURE_2D, ctx.shadowProgram);
+    glBindTexture(GL_TEXTURE_2D, ctx.light.shadowmap);
     glUniform1i(glGetUniformLocation(ctx.program, "u_shadowMapTex"), 2);
 
     glm::vec3 shadowFromView = ctx.light.position;
     glUniform3fv(glGetUniformLocation(ctx.program, "u_shadowFromView"), 1, &shadowFromView[0]);
 
     glUniform1i(glGetUniformLocation(ctx.program, "u_shadowFBO"), ctx.light.shadowFBO);
-
 
     // Draw scene
     for (unsigned i = 0; i < ctx.asset.nodes.size(); ++i) {
@@ -333,10 +331,10 @@ void update_shadowmap(Context &ctx, ShadowCastingLight &light, GLuint shadowFBO)
 
         // TODO Define the model matrix for the drawable
         glm::mat4 model_trans = glm::translate(glm::mat4(1.0f), glm::vec3(0.5f, -0.3f, 0.0f));
-    glm::mat4 model_scale = glm::scale(glm::mat4(1.0f), glm::vec3(0.5f, 0.5f, 0.5f));
-    glm::mat4 model_rot =
-        glm::rotate(glm::mat4(1.0f), glm::radians(90.0f), glm::vec3(1.0f, 0.0f, 0.0f));
-    glm::mat4 model = model_scale * model_rot;
+        glm::mat4 model_scale = glm::scale(glm::mat4(1.0f), glm::vec3(0.5f, 0.5f, 0.5f));
+        glm::mat4 model_rot =
+            glm::rotate(glm::mat4(1.0f), glm::radians(90.0f), glm::vec3(1.0f, 0.0f, 0.0f));
+        glm::mat4 model = model_scale * model_rot;
         glUniformMatrix4fv(glGetUniformLocation(ctx.shadowProgram, "u_model"), 1, GL_FALSE,
                            &model[0][0]);
 

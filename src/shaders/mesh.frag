@@ -64,7 +64,7 @@ void main()
     if(u_tglShadows == 1)
         diffuse = max(0.0, dot(N, L_shadow));
     else
-        diffuse = max(0.0, dot(N, L_shadow));
+        diffuse = max(0.0, dot(N, L));
 
 
     // Coefficients
@@ -74,16 +74,20 @@ void main()
     // Ambient light
     vec3 I_a = K_a * u_ambientColor;
 
-    // Diffuse light
-    vec3 I_d = K_d * u_diffuseColor * diffuse;
-
-    // Specular light
-    vec3 I_s = (u_specularPower+8)/8 * K_s * u_specularColor * pow(dot(N, H), u_specularPower);
+    vec3 I_d;
+    vec3 I_s;
     
+
     if (u_tglShadows == 1)
     {
-        I_d = I_d * shadowmap_visibility(u_shadowMapTex, shadowPos, bias);
-        I_s = I_s * shadowmap_visibility(u_shadowMapTex, shadowPos, bias);
+        I_d = K_d * u_diffuseColor * diffuse * shadowmap_visibility(u_shadowMapTex, shadowPos, bias);
+        I_s = (u_specularPower+8)/8 * K_s * u_specularColor * pow(dot(N, H), u_specularPower) * shadowmap_visibility(u_shadowMapTex, shadowPos, bias);
+    }
+    else
+    {
+        I_d = K_d * u_diffuseColor * diffuse;
+        I_s = (u_specularPower+8)/8 * K_s * u_specularColor * pow(dot(N, H), u_specularPower);
+    
     }
         
     vec3 output_color = pow(v_color, vec3(1 / 2.2));

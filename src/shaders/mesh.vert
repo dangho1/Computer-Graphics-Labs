@@ -4,7 +4,7 @@
 // Uniform constants
 uniform float u_time;
 uniform mat4 u_view;
-uniform mat4 u_projection;
+uniform mat4 u_proj;
 uniform mat4 u_model;
 uniform vec3 u_lightPosition; // The position of your light source
 uniform vec3 u_shadowFromView;
@@ -32,7 +32,7 @@ void main()
     if (u_displayOrtho == 1)
         gl_Position = u_ortho * u_model * a_position;
     else
-        gl_Position = u_projection * u_view * u_model * a_position;
+        gl_Position = u_proj * u_view * u_model * a_position;
     
     mat4 mv = mat4(u_view * u_model);
 
