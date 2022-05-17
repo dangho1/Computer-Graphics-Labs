@@ -29,6 +29,8 @@ in vec3 V;
 in vec4 shadowPos;
 //in vec3 L_shadow;
 in vec4 gl_FragCoord;
+in vec4 fragPosLightSpace;
+in vec3 fragPos;
 
 // Fragment shader outputs
 out vec4 frag_color;
@@ -38,7 +40,7 @@ float shadowmap_visibility(sampler2D shadowmap, vec4 shadowPos, float bias)
 {
     vec2 delta = vec2(0.5) / textureSize(shadowmap, 0).xy;
     vec2 texcoord = (shadowPos.xy / shadowPos.w) * 0.5 + 0.5;
-    float depth = (shadowPos.z / shadowPos.w) * 0.5 + 0.5;
+    float depth =(shadowPos.z / shadowPos.w) * 0.5 + 0.5;
     
     // Sample the shadowmap and compare texels with (depth - bias) to
     // return a visibility value in range [0, 1]. If you take more
@@ -53,47 +55,44 @@ float shadowmap_visibility(sampler2D shadowmap, vec4 shadowPos, float bias)
 
 void main()
 {
-
-    
-    float K_s = 0.04;
+    vec3 normal = normalize(N);
     
     // Calculate the halfway vector
     vec3 H = normalize(L + V);
 
-    float diffuse;
-
-    
-    diffuse = max(0.0, dot(N, L));
-
+    float diffuse = max(0.0, dot(normal, L));
 
     // Coefficients
     float K_d = 1;
     float K_a = K_d*0.01;
+    float K_s = 0.04;
     
     // Ambient light
     vec3 I_a = K_a * u_ambientColor;
 
-    vec3 I_d;
-    vec3 I_s;
+    // Diffuse light
+    vec3 I_d = K_d * u_diffuseColor * diffuse;
     
+    // Specular light
+    vec3 I_s = (u_specularPower+8)/8 * K_s * u_specularColor * pow(dot(N, H), u_specularPower);
 
-    float shadow = shadowmap_visibility(u_shadowMapTex, shadowPos, u_shadowBias);
+    // Shadow visability
+    float shadow = shadowmap_visibility(u_shadowMapTex, fragPosLightSpace, u_shadowBias);
+    /*
     if (u_tglShadows == 1)
     {
-        I_d = (K_d * u_diffuseColor * diffuse) * shadow;
-        I_s = ( (u_specularPower+8)/8 * K_s * u_specularColor * pow(dot(N, H), u_specularPower) ) * shadow;
+        I_d = I_d * (1-shadow);
+        I_s = I_s * (1-shadow);
     }
-    else
-    {
-        I_d = K_d * u_diffuseColor * diffuse;
-        I_s = (u_specularPower+8)/8 * K_s * u_specularColor * pow(dot(N, H), u_specularPower);
-   
-    }
-        
+    */
     vec3 output_color = pow(v_color, vec3(1 / 2.2));
 
     // Blinn-Phong lighting
     vec3 I = I_a + I_d + I_s;
+    if (u_tglShadows == 1)
+        I = I * shadow;
+        //I = I_a + I_d + I_s;
+    
 
     //Reflection vector
     vec3 R = reflect(-V, N);

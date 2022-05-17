@@ -28,7 +28,7 @@ struct ShadowCastingLight {
     glm::mat4 shadowMatrix = glm::mat4(1.0f);           // Camera matrix for shadowmap
     GLuint shadowmap;                                   // Depth texture
     GLuint shadowFBO;                                   // Depth framebuffer
-    float shadowBias = 0;                               // Bias for depth comparison
+    float shadowBias;                            // Bias for depth comparison
 };
 struct Context {
     int width = 512;
@@ -104,7 +104,7 @@ std::string cubemap_dir(void)
 void init_values(Context &ctx)
 {
     ctx.backgroundColor = glm::vec3(0.8f, 0.8f, 0.8f);
-    ctx.lightPosition = glm::vec3(0.0f, 0.0f, -1.0f);
+    ctx.lightPosition = glm::vec3(0.0f, 1.0f, 0.0f);
     ctx.diffuseColor = glm::vec3(1.0f, 1.0f, 1.0f);
     ctx.ambientColor = glm::vec3(1.0f, 0.0f, 0.0f);
     ctx.specularColor = glm::vec3(1.0f, 1.0f, 1.0f);
@@ -133,7 +133,7 @@ void do_initialization(Context &ctx)
     ctx.shadowProgram =
         cg::load_shader_program(shader_dir() + "shadow.vert", shader_dir() + "shadow.frag");
 
-    ctx.light.shadowmap = cg::create_depth_texture(ctx.width * 2, ctx.height * 2);
+    ctx.light.shadowmap = cg::create_depth_texture(1024, 1024);
     ctx.light.shadowFBO = cg::create_depth_framebuffer(ctx.light.shadowmap);
 
     init_values(ctx);
@@ -154,23 +154,24 @@ void draw_scene(Context &ctx)
 
     ImGui::ColorEdit3("Background Color", &ctx.backgroundColor[0]);
 
-    glm::mat4 projection = glm::mat4(1.0f);
-    glUniformMatrix4fv(glGetUniformLocation(ctx.program, "u_proj"), 1, GL_FALSE, &projection[0][0]);
-
+    
     glm::mat4 model_trans = glm::translate(glm::mat4(1.0f), glm::vec3(0.5f, -0.3f, 0.0f));
     glm::mat4 model_scale = glm::scale(glm::mat4(1.0f), glm::vec3(0.5f, 0.5f, 0.5f));
     glm::mat4 model_rot =
         glm::rotate(glm::mat4(1.0f), glm::radians(90.0f), glm::vec3(1.0f, 0.0f, 0.0f));
-    glm::mat4 model = model_scale * model_rot;
+    glm::mat4 model = model_scale;
     glUniformMatrix4fv(glGetUniformLocation(ctx.program, "u_model"), 1, GL_FALSE, &model[0][0]);
 
     glm::mat4 look = glm::lookAt(glm::vec3(0.0f, 0.0f, -1.0f), glm::vec3(0.0f, 0.0f, 0.0f),
                                  glm::vec3(0.0f, 1.0f, 0.0f));
 
-    glm::mat4 perspective = glm::perspective(glm::radians(ctx.zoomFactor), float(ctx.width / ctx.height), 0.1f, 100.0f);
+    glm::mat4 perspective = glm::perspective(glm::radians(ctx.zoomFactor), 1.0f, 0.1f, 10.0f);
+    glm::mat4 proj = glm::mat4(1.0f);
+    
 
     //glm::vec4 shadowFromView = ctx.light.shadowMatrix * model * glm::vec4(ctx.lightPosition, 1.0f);
-   
+    glUniformMatrix4fv(glGetUniformLocation(ctx.program, "u_proj"), 1, GL_FALSE, &proj[0][0]);
+
 
     glm::mat4 view = perspective * look * glm::mat4(ctx.trackball.orient);
     glUniformMatrix4fv(glGetUniformLocation(ctx.program, "u_view"), 1, GL_FALSE, &view[0][0]);
@@ -217,7 +218,8 @@ void draw_scene(Context &ctx)
     glUniform1i(glGetUniformLocation(ctx.program, "u_tglShadows"), ctx.tglShadows);
 
     ImGui::SliderFloat("Shadow bias", &ctx.light.shadowBias, 0.0f, 1.0f);
-    glUniform1i(glGetUniformLocation(ctx.program, "u_shadowBias"), ctx.light.shadowBias);
+    
+     glUniform3fv(glGetUniformLocation(ctx.program, "u_shadowLight"), 1, &ctx.light.position[0]);
 
     glActiveTexture(GL_TEXTURE0);
     ctx.cubemap = ctx.prefiltered[ctx.texture_index];
@@ -230,6 +232,7 @@ void draw_scene(Context &ctx)
 
     glUniform1i(glGetUniformLocation(ctx.program, "u_shadowFBO"), ctx.light.shadowFBO);
     //glUniform1i(glGetUniformLocation(ctx.program, "u_shadowMap"), ctx.light.shadowmap);
+    
 
     // Draw scene
     for (unsigned i = 0; i < ctx.asset.nodes.size(); ++i) {
@@ -238,10 +241,10 @@ void draw_scene(Context &ctx)
 
         // Define per-object uniforms
         // ...
-
+        glUniform1i(glGetUniformLocation(ctx.program, "u_shadowBias"), ctx.light.shadowBias);
+        glUniformMatrix4fv(glGetUniformLocation(ctx.program, "u_shadowMatrix"), 1, GL_FALSE, &ctx.light.shadowMatrix[0][0]);
         // ctx.textures.push_back(0);
         const gltf::Mesh &mesh = ctx.asset.meshes[node.mesh];
-        glUniformMatrix4fv(glGetUniformLocation(ctx.program, "u_shadowFromView"), 1, GL_FALSE, &ctx.light.shadowMatrix[0][0]);
         if (mesh.primitives[0].hasMaterial) {
             const gltf::Primitive &primitive = mesh.primitives[0];
             const gltf::Material &material = ctx.asset.materials[primitive.material];
@@ -289,7 +292,7 @@ void update_shadowmap(Context &ctx, ShadowCastingLight &light, GLuint shadowFBO)
 {
     // Set up rendering to shadowmap framebuffer
     glBindFramebuffer(GL_DRAW_FRAMEBUFFER, shadowFBO);
-    if (shadowFBO) glViewport(0, 0, ctx.width * 2, ctx.height * 2);  // TODO Set viewport to shadowmap size
+    if (shadowFBO) glViewport(0, 0, 1024, 1024);  // TODO Set viewport to shadowmap size
     glClear(GL_DEPTH_BUFFER_BIT);               // Clear depth values to 1.0
 
     // Set up pipeline
@@ -306,21 +309,20 @@ void update_shadowmap(Context &ctx, ShadowCastingLight &light, GLuint shadowFBO)
     // glm::mat4 model = glm::mat4(1.0f);
 
     if (ctx.displayOrtho)
-        proj = glm::ortho(-float(ctx.width / ctx.height), float(ctx.width / ctx.height), -1.0f,
-                          1.0f, 1.f, 100.0f);
-    else
-        proj = glm::perspective(glm::radians(ctx.zoomFactor), float(ctx.width / ctx.height), 0.1f,
-                                100.0f);
+        proj = glm::ortho(-1.0f, 1.0f, -1.0f, 1.0f, 0.1f, 10.0f);
+    else if (ctx.showShadowmap)
+        proj = glm::perspective(glm::radians(ctx.zoomFactor), 1.0f, 0.1f, 10.0f);  
+    else                            
+        proj = glm::perspective(1.0f, 1.0f, 0.1f, 10.0f);
 
-    view = glm::lookAt(ctx.lightPosition, glm::vec3(0, 0, 0), glm::vec3(0.0f, 1.0f, 0.0f)) *
-           glm::mat4(ctx.trackball.orient);
 
-    glUniformMatrix4fv(glGetUniformLocation(ctx.shadowProgram, "u_view"), 1, GL_FALSE, &view[0][0]);
-    glUniformMatrix4fv(glGetUniformLocation(ctx.shadowProgram, "u_proj"), 1, GL_FALSE, &proj[0][0]);
+    view = glm::lookAt(ctx.lightPosition, glm::vec3(0, 0, 0), glm::vec3(0.0f, 1.0f, 0.0f)); //* glm::mat4(ctx.trackball.orient);
 
     // Store updated shadow matrix for use in draw_scene()
     ctx.light.shadowMatrix = proj * view;
-    
+    glUniformMatrix4fv(glGetUniformLocation(ctx.shadowProgram, "u_view"), 1, GL_FALSE, &view[0][0]);
+    glUniformMatrix4fv(glGetUniformLocation(ctx.shadowProgram, "u_proj"), 1, GL_FALSE, &proj[0][0]);
+
 
     // Draw scene
     for (unsigned i = 0; i < ctx.asset.nodes.size(); ++i) {
@@ -332,10 +334,10 @@ void update_shadowmap(Context &ctx, ShadowCastingLight &light, GLuint shadowFBO)
         glm::mat4 model_scale = glm::scale(glm::mat4(1.0f), glm::vec3(0.5f, 0.5f, 0.5f));
         glm::mat4 model_rot =
             glm::rotate(glm::mat4(1.0f), glm::radians(90.0f), glm::vec3(1.0f, 0.0f, 0.0f));
-        glm::mat4 model = model_scale * model_rot;
+        glm::mat4 model = model_scale;
         glUniformMatrix4fv(glGetUniformLocation(ctx.shadowProgram, "u_model"), 1, GL_FALSE,
                            &model[0][0]);
-       
+   
         // Draw object
         glBindVertexArray(drawable.vao);
         glDrawElements(GL_TRIANGLES, drawable.indexCount, drawable.indexType,
