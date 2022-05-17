@@ -6,8 +6,9 @@ uniform float u_time;
 uniform mat4 u_view;
 uniform mat4 u_proj;
 uniform mat4 u_model;
+uniform mat4 u_shadowFromView;
 uniform vec3 u_lightPosition; // The position of your light source
-uniform vec3 u_shadowFromView;
+//uniform vec4 u_shadowFromView;
 
 uniform int u_displayNormals;
 uniform int u_displayOrtho;
@@ -24,6 +25,7 @@ out vec3 v_color;
 out vec3 N;
 out vec3 L;
 out vec3 V;
+out vec4 shadowPos;
 out vec3 L_shadow;
 out vec2 v_texcoord_0;
 
@@ -43,9 +45,9 @@ void main()
     N = normalize(mat3(mv) * a_normal);
 
     // Calculate the view-space light direction
-    L = normalize(u_lightPosition - positionEye);
+    L = normalize((u_view * vec4(u_lightPosition, 1.0f)).xyz - positionEye);
 
-    L_shadow = u_shadowFromView; //normalize(u_shadowFromView - positionEye);
+    shadowPos = u_shadowFromView * u_model * vec4(a_position.xyz, 1.0f);//vec4(u_lightPosition, -1.0f);
 
     // Calculate the view vector (the negative of the view-space position)
     V = normalize(vec3(0.0f, 0.0f, 0.0f) - positionEye);

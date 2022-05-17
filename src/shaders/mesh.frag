@@ -13,7 +13,8 @@ uniform int u_tglEnvMapping;
 uniform int u_tglTexMapping;
 uniform int u_tglShadows;
 uniform int u_shadowFBO;
-uniform vec3 u_shadowFromView;
+uniform int u_shadowMap;
+//uniform vec4 u_shadowFromView;
 uniform samplerCube u_cubemap;
 uniform sampler2D u_texture0; // texture sampler 0, texture map
 uniform sampler2D u_shadowMapTex; // texture sampler 1, shadow map
@@ -25,7 +26,8 @@ in vec3 v_color;
 in vec3 N;
 in vec3 L;
 in vec3 V;
-in vec3 L_shadow;
+in vec4 shadowPos;
+//in vec3 L_shadow;
 in vec4 gl_FragCoord;
 
 // Fragment shader outputs
@@ -44,27 +46,24 @@ float shadowmap_visibility(sampler2D shadowmap, vec4 shadowPos, float bias)
     // returned value should be the average of all comparisons.
     float texel = texture(shadowmap, texcoord).r;
     float visibility = float(texel > depth - bias);
+    //float visibility = 0;
     return visibility;
+    
 }
 
 void main()
 {
-    float bias = u_shadowBias;
-    vec4 shadowPos = vec4(u_shadowFromView, 0.0f);
+
     
     float K_s = 0.04;
-    //float u_shadowBias = 0.5;
     
     // Calculate the halfway vector
     vec3 H = normalize(L + V);
 
     float diffuse;
 
-    // Calculate the diffuse (Lambertian) reflection term
-    if(u_tglShadows == 1)
-        diffuse = max(0.0, dot(N, L_shadow));
-    else
-        diffuse = max(0.0, dot(N, L));
+    
+    diffuse = max(0.0, dot(N, L));
 
 
     // Coefficients
@@ -78,16 +77,17 @@ void main()
     vec3 I_s;
     
 
+    float shadow = shadowmap_visibility(u_shadowMapTex, shadowPos, u_shadowBias);
     if (u_tglShadows == 1)
     {
-        I_d = K_d * u_diffuseColor * diffuse * shadowmap_visibility(u_shadowMapTex, shadowPos, bias);
-        I_s = (u_specularPower+8)/8 * K_s * u_specularColor * pow(dot(N, H), u_specularPower) * shadowmap_visibility(u_shadowMapTex, shadowPos, bias);
+        I_d = (K_d * u_diffuseColor * diffuse) * shadow;
+        I_s = ( (u_specularPower+8)/8 * K_s * u_specularColor * pow(dot(N, H), u_specularPower) ) * shadow;
     }
     else
     {
         I_d = K_d * u_diffuseColor * diffuse;
         I_s = (u_specularPower+8)/8 * K_s * u_specularColor * pow(dot(N, H), u_specularPower);
-    
+   
     }
         
     vec3 output_color = pow(v_color, vec3(1 / 2.2));
